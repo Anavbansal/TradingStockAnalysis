@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: Trading Copilot API
+  version: 1.0.0
+servers:
+  - url: https://app.yourdomain.com/copilot-tools
+paths:
+  /gtt/create:
+    post:
+      operationId: createGtt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol, side, triggerPrice]
+              properties:
+                symbol:
+                  type: string
+                side:
+                  type: string
+                  enum: [BUY, SELL]
+                triggerPrice:
+                  type: number
+                quantity:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                targetPrice:
+                  type: number
+                stopLoss:
+                  type: number
+                notes:
+                  type: string
+                confirm:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: GTT response
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

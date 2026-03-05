@@ -1,3 +1,42 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
 
-@import "tailwindcss";
+:root {
+  --app-font: 'IBM Plex Sans', 'Segoe UI', 'Helvetica Neue', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: var(--app-font);
+  background: #071018;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0b1a24;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #214155;
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2e5d79;
+}

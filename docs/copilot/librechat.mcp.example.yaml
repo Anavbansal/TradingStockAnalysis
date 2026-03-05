@@ -1,0 +1,10 @@
+mcpServers:
+  trading-copilot:
+    type: streamable-http
+    url: https://app.yourdomain.com/copilot-tools/mcp
+    timeout: 20000
+    initTimeout: 30000
+    headers:
+      Authorization: "Bearer {{LIBRECHAT_USER_JWT}}"
+      X-User-ID: "{{LIBRECHAT_USER_ID}}"
+      X-User-Email: "{{LIBRECHAT_USER_EMAIL}}"

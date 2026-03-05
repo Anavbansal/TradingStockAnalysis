@@ -1,0 +1,26 @@
+{
+  "/copilot-tools": {
+    "target": "http://localhost:8787",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/copilot-tools": ""
+    }
+  },
+  "/copilot": {
+    "target": "http://localhost:3080",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api": {
+    "target": "https://9dmy4sgdc3.execute-api.ap-south-1.amazonaws.com/prod",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/api": ""
+    }
+  }
+}

@@ -1,0 +1,94 @@
+.portfolio-card {
+  border: 1px solid #1c2e41;
+  background: rgba(11, 22, 33, 0.88);
+  border-radius: 14px;
+  padding: 0.85rem;
+}
+
+.portfolio-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.portfolio-head h3 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9bb3c6;
+}
+
+.portfolio-head span {
+  color: #7690a6;
+  font-size: 0.74rem;
+}
+
+.summary-grid {
+  margin-top: 0.7rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.summary-grid div {
+  background: #0f1c29;
+  border: 1px solid #203446;
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+
+.summary-grid p {
+  font-size: 0.65rem;
+  color: #7690a4;
+}
+
+.summary-grid strong {
+  color: #f0f8ff;
+  font-size: 0.8rem;
+}
+
+.holdings-wrap {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.holding-item {
+  border: 1px solid #223548;
+  background: #0f1b27;
+  border-radius: 11px;
+  padding: 0.55rem;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: inherit;
+}
+
+.holding-item p {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #e9f2fb;
+}
+
+.holding-item small {
+  color: #869db1;
+  font-size: 0.68rem;
+}
+
+.values {
+  text-align: right;
+}
+
+.values strong {
+  font-size: 0.76rem;
+  color: #eff7ff;
+}
+
+.up {
+  color: #66e8b1;
+}
+
+.down {
+  color: #ff8692;
+}

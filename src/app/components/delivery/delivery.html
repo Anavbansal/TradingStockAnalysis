@@ -1,0 +1,80 @@
+<section class="delivery-grid">
+  <article class="card chart-card">
+    <div class="head">
+      <div>
+        <p class="kicker">Delivery</p>
+        <h3>Long-Term Share View</h3>
+      </div>
+      <span>{{ snapshot.stock }}</span>
+    </div>
+    <app-tradingview-chart
+      [symbol]="snapshot.stock"
+      interval="D"
+      [candles]="chartCandles"
+      [height]="350"
+    ></app-tradingview-chart>
+    <p class="meta">{{ dataWindowLabel }}</p>
+  </article>
+
+  <article class="card score-card">
+    <div class="state-row">
+      <span class="state" [ngClass]="investmentViewClass">{{ investmentView }}</span>
+      <span class="risk">Risk: {{ riskTag }}</span>
+    </div>
+
+    <div class="metrics">
+      <div><p>Range Return</p><strong [class.up]="returnPct >= 0" [class.down]="returnPct < 0">{{ returnPct | number: '1.2-2' }}%</strong></div>
+      <div><p>SMA 50</p><strong>Rs {{ sma50 | number: '1.2-2' }}</strong></div>
+      <div><p>SMA 200</p><strong>Rs {{ sma200 | number: '1.2-2' }}</strong></div>
+      <div><p>Max Drawdown</p><strong>{{ maxDrawdownPct | number: '1.2-2' }}%</strong></div>
+      <div><p>Ann. Volatility</p><strong>{{ annualizedVolatilityPct | number: '1.2-2' }}%</strong></div>
+      <div><p>Latest Price</p><strong>Rs {{ endPrice | number: '1.2-2' }}</strong></div>
+    </div>
+
+    <div class="notes">
+      <p>Delivery section uses daily-candle trend structure and risk metrics for long-term allocation decisions.</p>
+      <p>Use this with fundamentals (earnings, debt, cash flow) before final investment decisions.</p>
+    </div>
+  </article>
+
+  <article class="card guide-card">
+    <div class="guide-head">
+      <h3>Short-Term Plan</h3>
+      <span class="signal-pill" [ngClass]="shortTermActionClass">{{ shortTermAction }}</span>
+    </div>
+    <div class="guide-grid">
+      <div><p>Entry</p><strong>Rs {{ shortTermEntry | number: '1.2-2' }}</strong></div>
+      <div><p>Stop-Loss</p><strong>Rs {{ shortTermStopLoss | number: '1.2-2' }}</strong></div>
+      <div><p>Target 1</p><strong>Rs {{ shortTermTarget1 | number: '1.2-2' }}</strong></div>
+      <div><p>Target 2</p><strong>Rs {{ shortTermTarget2 | number: '1.2-2' }}</strong></div>
+      <div><p>Risk/Reward</p><strong>{{ shortTermRiskReward | number: '1.2-2' }} : 1</strong></div>
+      <div><p>Confidence</p><strong>{{ snapshot.insight.confidence | number: '1.0-0' }}%</strong></div>
+    </div>
+    <p class="guide-text">
+      Execute only if price stays near entry and avoid fresh entries if stop-loss is already broken.
+    </p>
+  </article>
+
+  <article class="card guide-card">
+    <div class="guide-head">
+      <h3>Long-Term Delivery Plan</h3>
+      <span class="signal-pill" [ngClass]="longTermActionClass">{{ longTermAction }}</span>
+    </div>
+    <div class="guide-grid">
+      <div><p>Buy Zone</p><strong>Rs {{ longTermEntryFrom | number: '1.2-2' }} - {{ longTermEntryTo | number: '1.2-2' }}</strong></div>
+      <div><p>Invalidation</p><strong>Rs {{ longTermStopLoss | number: '1.2-2' }}</strong></div>
+      <div><p>Target 1</p><strong>Rs {{ longTermTarget1 | number: '1.2-2' }}</strong></div>
+      <div><p>Target 2</p><strong>Rs {{ longTermTarget2 | number: '1.2-2' }}</strong></div>
+      <div><p>Time Horizon</p><strong>{{ longTermHorizon }}</strong></div>
+      <div><p>Volatility</p><strong>{{ annualizedVolatilityPct | number: '1.2-2' }}%</strong></div>
+    </div>
+    <div class="checklist">
+      <p>Checklist before delivery buy:</p>
+      <ul>
+        <li>Profit growth and cash flow trend are stable.</li>
+        <li>Debt and promoter pledge are not deteriorating.</li>
+        <li>Price respects SMA 200 after pullbacks.</li>
+      </ul>
+    </div>
+  </article>
+</section>

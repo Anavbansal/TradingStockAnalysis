@@ -1,0 +1,384 @@
+<div class="terminal-shell">
+  <header class="top-nav">
+    <div class="nav-brand">ANAVAI</div>
+    <div class="nav-search">
+      <input
+        [(ngModel)]="symbol"
+        (keyup.enter)="setSymbol(symbol)"
+        type="text"
+        placeholder="Search symbol"
+        class="search-input"
+      />
+      <button type="button" class="submit-btn" [disabled]="isManualSubmitting" (click)="onManualRefresh()">
+        <span *ngIf="isManualSubmitting" class="btn-spinner" aria-hidden="true"></span>
+        {{ isManualSubmitting ? 'Loading...' : 'Submit' }}
+      </button>
+    </div>
+    <nav class="nav-links">
+      <button
+        *ngFor="let item of navItems"
+        type="button"
+        class="nav-btn"
+        [class.nav-btn-active]="activeSection === item.key"
+        (click)="setSection(item.key)"
+      >
+        {{ item.label }}
+      </button>
+    </nav>
+  </header>
+
+  <main class="terminal-body">
+    <section class="error-banner" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </section>
+
+    <section class="loader-wrap" *ngIf="isLoading && !snapshot">
+      <div class="loader"></div>
+      <p>Loading live market feed...</p>
+    </section>
+
+    <ng-container *ngIf="snapshot as snap">
+      <section *ngIf="showChartWindowSelector">
+        <label class="range-picker">
+          <span>Chart Window</span>
+          <select [ngModel]="selectedChartWindow" (ngModelChange)="setChartWindow($event)" class="range-select">
+            <option *ngFor="let item of chartWindowOptions" [ngValue]="item.value">{{ item.label }}</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="home-chart-wrap" *ngIf="activeSection === 'home'">
+        <article class="home-chart-panel">
+          <div class="home-chart-head">
+            <div>
+              <p class="home-chart-kicker">Home</p>
+              <h2>NIFTY 50 Live Chart</h2>
+            </div>
+            <div class="home-chart-meta">
+              <strong [class.up]="homeChartPositive" [class.down]="!homeChartPositive">
+                {{ homeDayChangePercent | number: '1.2-2' }}%
+              </strong>
+              <span>Updated {{ snap.updatedAt | date: 'shortTime' }}</span>
+            </div>
+          </div>
+
+          <div class="home-chart-stats">
+            <span>LTP: Rs {{ snap.price | number: '1.2-2' }}</span>
+            <span>Open: Rs {{ snap.open | number: '1.2-2' }}</span>
+            <span>High: Rs {{ homeChartHigh | number: '1.2-2' }}</span>
+            <span>Low: Rs {{ homeChartLow | number: '1.2-2' }}</span>
+          </div>
+
+          <div class="home-chart-shell">
+            <app-tradingview-chart
+              [symbol]="snap.stock"
+              [interval]="selectedRes"
+              [candles]="snap.candleData"
+              [height]="260"
+            ></app-tradingview-chart>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-panel" *ngIf="activeSection === 'watchlist'">
+        <label class="inner-search">
+          <input [(ngModel)]="innerSearch" type="text" class="search-input" placeholder="Search inside WatchList" />
+        </label>
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Watchlist</h3>
+            <span>{{ watchlist.length }} symbols</span>
+          </div>
+          <div class="watchlist">
+            <button
+              *ngFor="let item of watchlist"
+              type="button"
+              class="watch-item"
+              [class.watch-item-active]="item.symbol === symbol"
+              (click)="onWatchlistPick(item.symbol)"
+            >
+              <div>
+                <p>{{ item.symbol }}</p>
+                <small>{{ item.name }}</small>
+              </div>
+              <div class="watch-value">
+                <strong>Rs {{ item.price | number: '1.2-2' }}</strong>
+                <small [class.up]="item.changePercent >= 0" [class.down]="item.changePercent < 0">
+                  {{ item.changePercent | number: '1.2-2' }}%
+                </small>
+              </div>
+            </button>
+          </div>
+        </article>
+
+        <article class="panel" *ngIf="breadth as marketBreadth">
+          <div class="panel-head">
+            <h3>Market Breadth</h3>
+            <span>Index Pulse</span>
+          </div>
+          <div class="breadth-grid">
+            <div><p>Advances</p><strong>{{ marketBreadth.advances }}</strong></div>
+            <div><p>Declines</p><strong>{{ marketBreadth.declines }}</strong></div>
+            <div><p>Unchanged</p><strong>{{ marketBreadth.unchanged }}</strong></div>
+            <div><p>Volatility</p><strong>{{ marketBreadth.volatilityIndex | number: '1.1-1' }}</strong></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-panel" *ngIf="activeSection === 'intraday'">
+        <div class="inner-search-row">
+          <input [(ngModel)]="innerSearch" type="text" class="search-input" placeholder="Search inside Intraday" />
+          <button type="button" class="submit-btn" (click)="onInnerSearch('intraday')">Search</button>
+        </div>
+        <app-intraday [snapshot]="snap" [lookbackDays]="selectedHistoryDays" [interval]="selectedRes"></app-intraday>
+      </section>
+
+      <section class="section-panel" *ngIf="activeSection === 'delivery'">
+        <div class="inner-search-row">
+          <input [(ngModel)]="innerSearch" type="text" class="search-input" placeholder="Search inside Delivery" />
+          <button type="button" class="submit-btn" (click)="onInnerSearch('delivery')">Search</button>
+        </div>
+        <app-delivery [snapshot]="snap" [historyDays]="selectedHistoryDays"></app-delivery>
+      </section>
+
+      <section class="section-panel" *ngIf="activeSection === 'fo'">
+        <div class="inner-search-row">
+          <input [(ngModel)]="innerSearch" type="text" class="search-input" placeholder="Search inside F&O" />
+          <button type="button" class="submit-btn" (click)="onInnerSearch('fo')">Search</button>
+        </div>
+        <app-fo-greeks [snapshot]="snap" [interval]="selectedRes"></app-fo-greeks>
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Derivatives Pulse</h3>
+            <button type="button" class="refresh-btn" (click)="refreshDerivativesData()">Refresh</button>
+          </div>
+
+          <div class="fo-metrics">
+            <div class="metric-tile">
+              <p>Avg PCR</p>
+              <strong>{{ avgPcr | number: '1.2-2' }}</strong>
+            </div>
+            <div class="metric-tile">
+              <p>Top PCR Symbol</p>
+              <strong>{{ topPcrSymbol }}</strong>
+            </div>
+            <div class="metric-tile">
+              <p>Avg Gainers %</p>
+              <strong [class.up]="gainersAvgChange >= 0" [class.down]="gainersAvgChange < 0">
+                {{ gainersAvgChange | number: '1.2-2' }}
+              </strong>
+            </div>
+            <div class="metric-tile">
+              <p>Net OI Change</p>
+              <strong [class.up]="oiNetChangeTotal >= 0" [class.down]="oiNetChangeTotal < 0">
+                {{ oiNetChangeTotal | number }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="fo-mode-tabs">
+            <button type="button" class="section-btn" [class.section-btn-active]="foViewMode === 'gainers'" (click)="setFoViewMode('gainers')">
+              Top Gainers/Losers
+            </button>
+            <button type="button" class="section-btn" [class.section-btn-active]="foViewMode === 'pcr'" (click)="setFoViewMode('pcr')">
+              PCR
+            </button>
+            <button type="button" class="section-btn" [class.section-btn-active]="foViewMode === 'oi'" (click)="setFoViewMode('oi')">
+              OI Buildup
+            </button>
+          </div>
+
+          <div class="alerts-form">
+            <label class="control-field">
+              <span>Option Greeks Expiry (DDMMMYYYY)</span>
+              <input
+                [(ngModel)]="selectedOptionGreekExpiry"
+                class="control-input"
+                type="text"
+                placeholder="27FEB2026"
+                (keyup.enter)="refreshDerivativesData()"
+              />
+            </label>
+            <label class="control-field" *ngIf="foViewMode === 'gainers' || foViewMode === 'oi'">
+              <span>Expiry</span>
+              <select [(ngModel)]="selectedExpiryType" class="control-input" (change)="refreshDerivativesData()">
+                <option *ngFor="let item of expiryTypes" [value]="item.value">{{ item.label }}</option>
+              </select>
+            </label>
+            <label class="control-field" *ngIf="foViewMode === 'gainers'">
+              <span>Top Gainers/Losers Type</span>
+              <select [(ngModel)]="selectedGainersType" class="control-input" (change)="refreshDerivativesData()">
+                <option *ngFor="let item of gainersTypes" [value]="item.value">{{ item.label }}</option>
+              </select>
+            </label>
+            <label class="control-field" *ngIf="foViewMode === 'oi'">
+              <span>OI Buildup Type</span>
+              <select [(ngModel)]="selectedOiType" class="control-input" (change)="refreshDerivativesData()">
+                <option *ngFor="let item of oiTypes" [value]="item.value">{{ item.label }}</option>
+              </select>
+            </label>
+          </div>
+
+          <p class="brand-subtitle" *ngIf="isDerivativesLoading">Loading derivatives data...</p>
+          <p class="error-banner" *ngIf="!isDerivativesLoading && derivativesMessage">{{ derivativesMessage }}</p>
+
+          <div class="derivatives-grid" *ngIf="!isDerivativesLoading && foViewMode === 'gainers'">
+            <article class="mini-panel">
+              <h4>Top Gainers/Losers</h4>
+              <div class="table-wrap" *ngIf="gainersLosersRows.length > 0; else noGainers">
+                <table class="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>% Chg</th>
+                      <th>OI</th>
+                      <th>Net OI Chg</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of gainersLosersRows.slice(0, 10)">
+                      <td>{{ row.tradingSymbol }}</td>
+                      <td [class.up]="row.percentChange >= 0" [class.down]="row.percentChange < 0">
+                        {{ row.percentChange | number: '1.2-2' }}
+                      </td>
+                      <td>{{ row.opnInterest | number }}</td>
+                      <td>{{ row.netChangeOpnInterest | number }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <ng-template #noGainers>
+                <p class="brand-subtitle">No records.</p>
+              </ng-template>
+            </article>
+          </div>
+
+          <div class="derivatives-grid" *ngIf="!isDerivativesLoading && foViewMode === 'pcr'">
+            <article class="mini-panel">
+              <h4>PCR</h4>
+              <div class="table-wrap" *ngIf="pcrRows.length > 0; else noPcr">
+                <table class="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>PCR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of pcrRows.slice(0, 12)">
+                      <td>{{ row.tradingSymbol }}</td>
+                      <td>{{ row.pcr | number: '1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <ng-template #noPcr>
+                <p class="brand-subtitle">No PCR records.</p>
+              </ng-template>
+            </article>
+          </div>
+
+          <div class="derivatives-grid" *ngIf="!isDerivativesLoading && foViewMode === 'oi'">
+            <article class="mini-panel">
+              <h4>OI Buildup</h4>
+              <div class="table-wrap" *ngIf="oiBuildupRows.length > 0; else noOi">
+                <table class="holdings-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>LTP</th>
+                      <th>% Chg</th>
+                      <th>OI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of oiBuildupRows.slice(0, 10)">
+                      <td>{{ row.tradingSymbol }}</td>
+                      <td>{{ row.ltp | number: '1.2-2' }}</td>
+                      <td [class.up]="row.percentChange >= 0" [class.down]="row.percentChange < 0">
+                        {{ row.percentChange | number: '1.2-2' }}
+                      </td>
+                      <td>{{ row.opnInterest | number }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <ng-template #noOi>
+                <p class="brand-subtitle">No OI buildup records.</p>
+              </ng-template>
+            </article>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-panel" *ngIf="activeSection === 'mutualfunds'">
+        <app-mutual-funds></app-mutual-funds>
+      </section>
+    </ng-container>
+
+    <section class="section-panel" *ngIf="activeSection === 'enhancements'">
+      <div class="inner-search-row">
+        <input [(ngModel)]="innerSearch" type="text" class="search-input" placeholder="Search inside Enhancements" />
+        <button type="button" class="submit-btn" (click)="onInnerSearch('enhancements')">Search</button>
+      </div>
+      <app-ai-insights
+        *ngIf="snapshot as snap"
+        [snapshot]="snap"
+        (quickAlert)="onQuickAlertCreate($event)"
+      ></app-ai-insights>
+    </section>
+
+    <section class="section-panel" *ngIf="activeSection === 'portfolio'">
+      <label class="inner-search">
+        <input [(ngModel)]="innerSearch" type="text" class="search-input" placeholder="Search inside Portfolio" />
+      </label>
+      <p class="brand-subtitle" *ngIf="isHoldingsLoading">Loading portfolio...</p>
+      <p class="error-banner" *ngIf="!isHoldingsLoading && holdingsMessage">{{ holdingsMessage }}</p>
+      <app-portfolio *ngIf="portfolio as p" [portfolio]="p" (stockSelected)="onPortfolioHoldingSelect($event)"></app-portfolio>
+
+      <article class="holding-detail-panel" *ngIf="!isHoldingsLoading && selectedAngelHolding as h">
+        <div class="holding-detail-head">
+          <div>
+            <h3>{{ h.tradingsymbol }}</h3>
+            <p>{{ h.exchange }} | {{ h.product }} | Token {{ h.symboltoken || '-' }}</p>
+          </div>
+          <div class="holding-pnl">
+            <span>Total P&amp;L</span>
+            <strong [class.up]="h.profitandloss >= 0" [class.down]="h.profitandloss < 0">
+              Rs {{ h.profitandloss | number: '1.2-2' }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="holding-metrics-grid">
+          <div class="holding-metric"><span>ISIN</span><strong>{{ h.isin || '-' }}</strong></div>
+          <div class="holding-metric"><span>Quantity</span><strong>{{ h.quantity }}</strong></div>
+          <div class="holding-metric"><span>T1 Quantity</span><strong>{{ h.t1quantity }}</strong></div>
+          <div class="holding-metric"><span>Realised Quantity</span><strong>{{ h.realisedquantity }}</strong></div>
+          <div class="holding-metric"><span>Authorised Quantity</span><strong>{{ h.authorisedquantity }}</strong></div>
+          <div class="holding-metric"><span>Average Price</span><strong>Rs {{ h.averageprice | number: '1.2-2' }}</strong></div>
+          <div class="holding-metric"><span>LTP</span><strong>Rs {{ h.ltp | number: '1.2-2' }}</strong></div>
+          <div class="holding-metric"><span>Prev Close</span><strong>Rs {{ h.close | number: '1.2-2' }}</strong></div>
+          <div class="holding-metric"><span>Invested Value</span><strong>Rs {{ selectedAngelInvestedValue | number: '1.2-2' }}</strong></div>
+          <div class="holding-metric"><span>Market Value</span><strong>Rs {{ selectedAngelMarketValue | number: '1.2-2' }}</strong></div>
+          <div class="holding-metric">
+            <span>Day P&amp;L</span>
+            <strong [class.up]="selectedAngelDayPnl >= 0" [class.down]="selectedAngelDayPnl < 0">
+              Rs {{ selectedAngelDayPnl | number: '1.2-2' }}
+            </strong>
+          </div>
+          <div class="holding-metric">
+            <span>P&amp;L %</span>
+            <strong [class.up]="h.pnlpercentage >= 0" [class.down]="h.pnlpercentage < 0">
+              {{ h.pnlpercentage | number: '1.2-2' }}%
+            </strong>
+          </div>
+          <div class="holding-metric"><span>Collateral Qty</span><strong>{{ h.collateralquantity ?? '-' }}</strong></div>
+          <div class="holding-metric"><span>Collateral Type</span><strong>{{ h.collateraltype ?? '-' }}</strong></div>
+          <div class="holding-metric"><span>Haircut</span><strong>{{ h.haircut | number: '1.2-2' }}</strong></div>
+        </div>
+      </article>
+    </section>
+
+  </main>
+</div>

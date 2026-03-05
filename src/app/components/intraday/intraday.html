@@ -1,0 +1,108 @@
+<section class="intraday-grid">
+  <article class="card tv-card">
+    <div class="chart-head">
+      <h3>Advanced Intraday Chart</h3>
+      <strong>{{ snapshot.stock }}</strong>
+    </div>
+    <div class="lookback-row">
+      <span>Range: {{ lookbackDays }}D</span>
+      <small>{{ dataDepthLabel }}</small>
+    </div>
+    <app-tradingview-chart
+      [symbol]="snapshot.stock"
+      [interval]="interval"
+      [candles]="chartCandles"
+      [height]="360"
+    ></app-tradingview-chart>
+    <p class="tv-note">Use VWAP + RSI + MACD confirmation before entry.</p>
+  </article>
+
+  <article class="card signal-card">
+    <h3>Intraday</h3>
+    <div class="signal-pill" [class.buy]="signal.side === 'BUY'" [class.sell]="signal.side === 'SELL'" [class.hold]="signal.side === 'HOLD'">
+      {{ signal.side }} PLAN
+    </div>
+    <dl>
+      <div>
+        <dt>Entry</dt>
+        <dd>Rs {{ signal.plan.entry | number: '1.2-2' }}</dd>
+      </div>
+      <div>
+        <dt>Target</dt>
+        <dd>Rs {{ signal.plan.target | number: '1.2-2' }}</dd>
+      </div>
+      <div>
+        <dt>Stop Loss</dt>
+        <dd>Rs {{ signal.plan.stopLoss | number: '1.2-2' }}</dd>
+      </div>
+      <div>
+        <dt>R:R</dt>
+        <dd>{{ signal.plan.riskReward | number: '1.2-2' }} : 1</dd>
+      </div>
+    </dl>
+    <p>Confidence: {{ signal.confidence }}% ({{ signal.confidenceBand }}) | Signal Score: {{ signal.score | number: '1.2-2' }}</p>
+    <ul class="gate-reasons" *ngIf="signal.blockedReasons.length > 0">
+      <li *ngFor="let reason of signal.blockedReasons">{{ reason }}</li>
+    </ul>
+    <div class="context-grid">
+      <div>
+        <span>Regime</span>
+        <strong>{{ regimeLabel }}</strong>
+      </div>
+      <div>
+        <span>ATR</span>
+        <strong>{{ atr | number: '1.2-2' }}</strong>
+      </div>
+      <div>
+        <span>Trend Strength</span>
+        <strong>{{ trendStrength | number: '1.2-2' }}%</strong>
+      </div>
+      <div>
+        <span>Volatility</span>
+        <strong>{{ volatilityPct | number: '1.2-2' }}%</strong>
+      </div>
+      <div>
+        <span>VWAP Distance</span>
+        <strong [class.up]="vwapDistancePct >= 0" [class.down]="vwapDistancePct < 0">
+          {{ vwapDistancePct | number: '1.2-2' }}%
+        </strong>
+      </div>
+      <div>
+        <span>Volume Ratio</span>
+        <strong>{{ volumeRatio | number: '1.2-2' }}x</strong>
+      </div>
+    </div>
+  </article>
+
+</section>
+
+<section class="card tape-card">
+  <div class="tape-head">
+    <h3>Recent Candles</h3>
+    <span>Latest 12 prints (5M)</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Open</th>
+          <th>High</th>
+          <th>Low</th>
+          <th>Close</th>
+          <th>Volume</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let candle of recentCandles" [class.up]="isBullish(candle)" [class.down]="!isBullish(candle)">
+          <td>{{ candle.timestamp | date: 'shortTime': '+0530' }}</td>
+          <td>{{ candle.open | number: '1.2-2' }}</td>
+          <td>{{ candle.high | number: '1.2-2' }}</td>
+          <td>{{ candle.low | number: '1.2-2' }}</td>
+          <td>{{ candle.close | number: '1.2-2' }}</td>
+          <td>{{ candle.volume | number }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,98 @@
+<section class="mf-grid">
+  <article class="mf-card search-card">
+    <div class="head">
+      <h3>Mutual Fund Explorer</h3>
+      <small *ngIf="isDirectoryLoading">Loading schemes...</small>
+    </div>
+    <input
+      type="text"
+      class="mf-input"
+      [(ngModel)]="query"
+      (ngModelChange)="onQueryChange()"
+      placeholder="Search scheme name or code"
+    />
+
+    <div class="scheme-list">
+      <button type="button" class="scheme-item" *ngFor="let scheme of filteredSchemes" (click)="selectScheme(scheme.schemeCode)">
+        <span>{{ scheme.schemeName }}</span>
+        <small>{{ scheme.schemeCode }}</small>
+      </button>
+    </div>
+  </article>
+
+  <article class="mf-card detail-card" *ngIf="selected as fund">
+    <div class="head">
+      <h3>{{ fund.schemeName }}</h3>
+      <button type="button" (click)="addToCompare()">Add Compare</button>
+    </div>
+    <p class="meta">{{ fund.amc || '-' }} | {{ fund.category || '-' }}</p>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="meta" *ngIf="isHistoryLoading">Refreshing NAV history...</p>
+
+    <div class="metrics">
+      <div><p>Current NAV</p><strong>{{ currentNav | number: '1.4-4' }}</strong></div>
+      <div><p>1M</p><strong [class.up]="return1M >= 0" [class.down]="return1M < 0">{{ return1M | number: '1.2-2' }}%</strong></div>
+      <div><p>6M</p><strong [class.up]="return6M >= 0" [class.down]="return6M < 0">{{ return6M | number: '1.2-2' }}%</strong></div>
+      <div><p>1Y</p><strong [class.up]="return1Y >= 0" [class.down]="return1Y < 0">{{ return1Y | number: '1.2-2' }}%</strong></div>
+      <div><p>3Y CAGR</p><strong [class.up]="return3YCagr >= 0" [class.down]="return3YCagr < 0">{{ return3YCagr | number: '1.2-2' }}%</strong></div>
+      <div><p>5Y CAGR</p><strong [class.up]="return5YCagr >= 0" [class.down]="return5YCagr < 0">{{ return5YCagr | number: '1.2-2' }}%</strong></div>
+    </div>
+
+    <div class="chart-shell">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" *ngIf="chartPath">
+        <path class="chart-line" [attr.d]="chartPath"></path>
+      </svg>
+    </div>
+  </article>
+</section>
+
+<section class="mf-grid lower">
+  <article class="mf-card sip-card">
+    <h3>SIP Calculator</h3>
+    <div class="sip-inputs">
+      <label>
+        <span>Monthly SIP (Rs)</span>
+        <input type="number" [(ngModel)]="monthlySip" min="500" step="500" />
+      </label>
+      <label>
+        <span>Years</span>
+        <input type="number" [(ngModel)]="sipYears" min="1" max="40" />
+      </label>
+      <label>
+        <span>Expected Return %</span>
+        <input type="number" [(ngModel)]="expectedReturnPct" min="1" max="30" step="0.5" />
+      </label>
+    </div>
+    <div class="metrics">
+      <div><p>Invested</p><strong>Rs {{ sipInvested | number: '1.2-2' }}</strong></div>
+      <div><p>Future Value</p><strong>Rs {{ sipFutureValue | number: '1.2-2' }}</strong></div>
+      <div><p>Estimated Gain</p><strong class="up">Rs {{ sipGain | number: '1.2-2' }}</strong></div>
+    </div>
+  </article>
+
+  <article class="mf-card compare-card">
+    <h3>Compare Funds (Max 3)</h3>
+    <table *ngIf="compareRows.length > 0; else noCompare">
+      <thead>
+        <tr>
+          <th>Scheme</th>
+          <th>NAV</th>
+          <th>1Y Return</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of compareRows">
+          <td>{{ row.schemeName }}</td>
+          <td>{{ row.nav | number: '1.4-4' }}</td>
+          <td [class.up]="row.return1Y >= 0" [class.down]="row.return1Y < 0">{{ row.return1Y | number: '1.2-2' }}%</td>
+          <td><button type="button" class="remove-btn" (click)="removeCompare(row.schemeCode)">Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #noCompare>
+      <p class="meta">Select a scheme and click "Add Compare".</p>
+    </ng-template>
+  </article>
+</section>
+

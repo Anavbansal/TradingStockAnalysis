@@ -1,0 +1,66 @@
+.tv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tv-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #2a4a64;
+  background: #102130;
+  color: #9ad0ff;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 0.26rem 0.52rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tv-link:hover {
+  border-color: #3e6a8b;
+  color: #c3e4ff;
+}
+
+.tv-toolbar label {
+  color: #8ea4bc;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tv-toolbar select {
+  background: #0d1a26;
+  border: 1px solid #203447;
+  color: #d6e3f0;
+  border-radius: 8px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.tv-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #8ea4bc;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tv-chart-shell {
+  width: 100%;
+  min-height: 280px;
+  border: 1px solid #1f3446;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b121b;
+}
+
+.tv-chart-host {
+  width: 100%;
+  height: 100%;
+}

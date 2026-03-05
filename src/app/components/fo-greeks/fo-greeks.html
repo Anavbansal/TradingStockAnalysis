@@ -1,0 +1,117 @@
+<section class="greeks-card">
+  <div class="fo-chart-wrap">
+    <div class="greeks-head">
+      <h3>F&O Advanced Chart</h3>
+      <span>{{ snapshot.stock }}</span>
+    </div>
+    <app-tradingview-chart
+      [symbol]="snapshot.stock"
+      [interval]="interval"
+      [candles]="snapshot.candleData"
+      [height]="340"
+    ></app-tradingview-chart>
+  </div>
+
+  <div class="simple-trade-card" *ngIf="snapshot.optionSignal">
+  <h3>Recommended Option Trade</h3>
+  <div class="trade-details">
+    <div class="trade-box">
+      <span class="label">INSTRUMENT</span>
+      <span class="value">{{snapshot.stock}} {{snapshot.optionSignal.strike}} {{snapshot.optionSignal.type}}</span>
+    </div>
+    <div class="trade-box highlight">
+      <span class="label">BUY AT</span>
+      <span class="value">{{snapshot.optionSignal.entryRange}}</span>
+    </div>
+    <div class="trade-box danger">
+      <span class="label">STOP LOSS</span>
+      <span class="value">{{snapshot.optionSignal.stopLoss}}</span>
+    </div>
+    <div class="trade-box success">
+      <span class="label">EXIT TARGET</span>
+      <span class="value">{{snapshot.optionSignal.target}}</span>
+    </div>
+  </div>
+  <p class="logic-text">{{snapshot.optionSignal.logic}}</p>
+</div>
+  <div class="greeks-head">
+    <h3>Premium F&O Desk</h3>
+    <span>Spot: Rs {{ snapshot.price | number: '1.2-2' }}</span>
+  </div>
+
+  <div class="premium-metrics">
+    <article>
+      <p>PCR (OI)</p>
+      <strong>{{ putCallRatio | number: '1.2-2' }}</strong>
+    </article>
+    <article>
+      <p>ATM Straddle</p>
+      <strong>Rs {{ atmStraddlePremium | number: '1.2-2' }}</strong>
+    </article>
+    <article>
+      <p>IV Skew (PE-CE)</p>
+      <strong>{{ ivSkew | number: '1.2-2' }}</strong>
+    </article>
+    <article>
+      <p>Max Pain</p>
+      <strong>{{ maxPainStrike | number: '1.0-0' }}</strong>
+    </article>
+    <article>
+      <p>Flow</p>
+      <strong>{{ volumeDominance }}</strong>
+    </article>
+    <article>
+      <p>Call Wall</p>
+      <strong>{{ callWallStrike | number: '1.0-0' }}</strong>
+    </article>
+    <article>
+      <p>Put Wall</p>
+      <strong>{{ putWallStrike | number: '1.0-0' }}</strong>
+    </article>
+    <article>
+      <p>ATM Gamma</p>
+      <strong>{{ atmGamma | number: '1.4-4' }}</strong>
+    </article>
+    <article>
+      <p>Net Delta x OI</p>
+      <strong>{{ netDeltaOi | number }}</strong>
+    </article>
+  </div>
+
+  <div class="chain-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th colspan="4" class="ce-head">Calls (CE)</th>
+          <th>Strike</th>
+          <th colspan="4" class="pe-head">Puts (PE)</th>
+        </tr>
+        <tr>
+          <th>LTP</th>
+          <th>IV</th>
+          <th>OI</th>
+          <th>Vol</th>
+          <th></th>
+          <th>Vol</th>
+          <th>OI</th>
+          <th>IV</th>
+          <th>LTP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of chainRows" [class.atm]="isAtm(row.strike)">
+          <td>{{ row.ce?.ltp ? (row.ce?.ltp | number: '1.2-2') : '-' }}</td>
+          <td>{{ row.ce?.iv ? (row.ce?.iv | number: '1.2-2') : '-' }}</td>
+          <td>{{ row.ce?.oi ? (row.ce?.oi | number) : '-' }}</td>
+          <td>{{ row.ce?.tradeVolume ? (row.ce?.tradeVolume | number) : '-' }}</td>
+          <td class="strike">{{ row.strike | number: '1.0-0' }}</td>
+          <td>{{ row.pe?.tradeVolume ? (row.pe?.tradeVolume | number) : '-' }}</td>
+          <td>{{ row.pe?.oi ? (row.pe?.oi | number) : '-' }}</td>
+          <td>{{ row.pe?.iv ? (row.pe?.iv | number: '1.2-2') : '-' }}</td>
+          <td>{{ row.pe?.ltp ? (row.pe?.ltp | number: '1.2-2') : '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+

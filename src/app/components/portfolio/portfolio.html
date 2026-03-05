@@ -1,0 +1,45 @@
+<section class="portfolio-card">
+  <div class="portfolio-head">
+    <h3>Portfolio</h3>
+    <span>{{ portfolio.holdings.length }} holdings</span>
+  </div>
+
+  <div class="summary-grid">
+    <div>
+      <p>Total Value</p>
+      <strong>Rs {{ portfolio.totalValue | number: '1.2-2' }}</strong>
+    </div>
+    <div>
+      <p>Total P&L</p>
+      <strong [class.up]="portfolio.totalPnl >= 0" [class.down]="portfolio.totalPnl < 0">
+        Rs {{ portfolio.totalPnl | number: '1.2-2' }}
+      </strong>
+    </div>
+    <div>
+      <p>P&L %</p>
+      <strong [class.up]="portfolio.totalPnlPercent >= 0" [class.down]="portfolio.totalPnlPercent < 0">
+        {{ portfolio.totalPnlPercent | number: '1.2-2' }}%
+      </strong>
+    </div>
+  </div>
+
+  <div class="holdings-wrap">
+    <button
+      *ngFor="let holding of portfolio.holdings"
+      type="button"
+      class="holding-item"
+      (click)="stockSelected.emit(holding.symbol)"
+    >
+      <div>
+        <p>{{ holding.symbol }}</p>
+        <small>{{ holding.quantity }} qty | Avg Rs {{ holding.averagePrice | number: '1.2-2' }}</small>
+      </div>
+      <div class="values">
+        <strong>Rs {{ holding.marketValue | number: '1.2-2' }}</strong>
+        <small [class.up]="holding.pnl >= 0" [class.down]="holding.pnl < 0">
+          {{ holding.pnl | number: '1.2-2' }} ({{ holding.pnlPercent | number: '1.2-2' }}%)
+        </small>
+      </div>
+    </button>
+  </div>
+</section>

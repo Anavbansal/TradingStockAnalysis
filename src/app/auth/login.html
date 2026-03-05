@@ -1,0 +1,7 @@
+<div class="login-shell">
+  <section class="login-card">
+    <button type="button" [disabled]="isSubmitting" (click)="onLoginClick()">
+      {{ isSubmitting ? 'Generating Fresh Token...' : 'Login' }}
+    </button>
+  </section>
+</div>

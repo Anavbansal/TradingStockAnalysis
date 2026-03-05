@@ -1,0 +1,239 @@
+<section class="insight-card">
+  <div class="insight-head">
+    <h3>AI Market Insight</h3>
+    <span>{{ snapshot.insight.confidence }}% confidence</span>
+  </div>
+
+  <div class="quality-row">
+    <span class="quality-band">{{ confidenceBand }}</span>
+    <span class="quality-gate" [class.pass]="gatePassed" [class.fail]="!gatePassed">
+      {{ gatePassed ? 'Rule Gate: PASS' : 'Rule Gate: BLOCKED' }}
+    </span>
+  </div>
+
+  <div class="verdict-row">
+    <span class="verdict-pill" [ngClass]="verdictClass">{{ snapshot.insight.verdict }}</span>
+    <span class="delta-note">{{ snapshot.insight.changed.length > 0 ? snapshot.insight.changed.join(' | ') : lastDeltaLabel }}</span>
+  </div>
+
+  <p class="summary">{{ snapshot.analysis }}</p>
+
+  <div class="confidence-bar">
+    <div [style.width.%]="snapshot.insight.confidence"></div>
+  </div>
+
+  <div class="levels-grid">
+    <div>
+      <p>Entry</p>
+      <strong>Rs {{ snapshot.insight.entry | number: '1.2-2' }}</strong>
+    </div>
+    <div>
+      <p>Target</p>
+      <strong>Rs {{ snapshot.insight.target | number: '1.2-2' }}</strong>
+    </div>
+    <div>
+      <p>Stop Loss</p>
+      <strong>Rs {{ snapshot.insight.stopLoss | number: '1.2-2' }}</strong>
+    </div>
+  </div>
+
+  <article class="quick-actions">
+    <h4>Smart Alerts / GTT Helper</h4>
+    <div class="action-row">
+      <button type="button" (click)="createQuickAlert('entry')">Create Entry Alert</button>
+      <button type="button" (click)="createQuickAlert('target')">Create Target Alert</button>
+      <button type="button" (click)="createQuickAlert('stopLoss')">Create Stop Alert</button>
+    </div>
+  </article>
+
+  <article class="panel-box copilot-box">
+    <div class="panel-head-row">
+      <h4>AI Trading Copilot</h4>
+      <button type="button" (click)="openCopilot()" [disabled]="isCopilotLaunching">
+        {{ isCopilotLaunching ? 'Launching...' : 'Open' }}
+      </button>
+    </div>
+    <p class="minor-note" *ngIf="copilotError">{{ copilotError }}</p>
+    <iframe
+      *ngIf="copilotUrl"
+      [src]="copilotUrl"
+      title="AI Trading Copilot"
+      class="copilot-frame"
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+  </article>
+
+  <article class="split-grid">
+    <div class="panel-box">
+      <h4>Confidence Breakdown</h4>
+      <div class="mini-grid">
+        <div><p>Trend</p><strong>{{ trendScore | number: '1.0-0' }}</strong></div>
+        <div><p>Volatility</p><strong>{{ volatilityScore | number: '1.0-0' }}</strong></div>
+        <div><p>News</p><strong>{{ newsScore | number: '1.0-0' }}</strong></div>
+        <div><p>Data Quality</p><strong>{{ qualityScore | number: '1.0-0' }}</strong></div>
+      </div>
+      <p class="minor-note">Blended: {{ blendedConfidence | number: '1.0-0' }} | Regime Mode: {{ regimeMode }}</p>
+    </div>
+
+    <div class="panel-box">
+      <h4>Risk Engine</h4>
+      <div class="input-grid">
+        <label>
+          <span>Capital</span>
+          <input type="number" [(ngModel)]="capital" min="1000" step="1000" />
+        </label>
+        <label>
+          <span>Risk %</span>
+          <input type="number" [(ngModel)]="riskPerTradePct" min="0.2" max="5" step="0.1" />
+        </label>
+      </div>
+      <div class="mini-grid">
+        <div><p>Risk Capital</p><strong>Rs {{ riskCapital | number: '1.2-2' }}</strong></div>
+        <div><p>Risk/Share</p><strong>Rs {{ riskPerShare | number: '1.2-2' }}</strong></div>
+        <div><p>Regime Mult</p><strong>{{ regimeRiskMultiplier | number: '1.2-2' }}x</strong></div>
+        <div><p>Suggested Qty</p><strong>{{ suggestedQty | number: '1.0-0' }}</strong></div>
+      </div>
+      <p class="minor-note">Suggested position value: Rs {{ suggestedPositionValue | number: '1.2-2' }}</p>
+    </div>
+  </article>
+
+  <article class="split-grid">
+    <div class="panel-box">
+      <h4>Signal Explainability</h4>
+      <table class="explain-table">
+        <tr *ngFor="let row of explainabilityRows">
+          <td>{{ row.k }}</td>
+          <td>{{ row.v }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="panel-box">
+      <h4>Backtest (Rule Snapshot)</h4>
+      <div class="mini-grid">
+        <div><p>Trades</p><strong>{{ backtest.trades }}</strong></div>
+        <div><p>Win Rate</p><strong>{{ backtest.winRate | number: '1.2-2' }}%</strong></div>
+        <div><p>Net R</p><strong>{{ backtest.netR | number: '1.2-2' }}</strong></div>
+        <div><p>Max DD (R)</p><strong>{{ backtest.maxDrawdownR | number: '1.2-2' }}</strong></div>
+      </div>
+      <p class="minor-note">Uses recent ~320 candles and fixed walk-forward execution assumptions.</p>
+    </div>
+  </article>
+
+  <article class="split-grid">
+    <div class="panel-box">
+      <h4>Delivery Fundamentals Layer</h4>
+      <div class="input-grid">
+        <label>
+          <span>EPS Growth %</span>
+          <input type="number" [(ngModel)]="epsGrowthPct" (change)="saveFundamentals()" />
+        </label>
+        <label>
+          <span>Debt / Equity</span>
+          <input type="number" [(ngModel)]="debtToEquity" step="0.1" (change)="saveFundamentals()" />
+        </label>
+        <label>
+          <span>ROE %</span>
+          <input type="number" [(ngModel)]="roePct" (change)="saveFundamentals()" />
+        </label>
+      </div>
+      <p class="minor-note">Fundamental score: <strong>{{ fundamentalScore | number: '1.0-0' }}</strong> / 100</p>
+    </div>
+
+    <div class="panel-box">
+      <h4>Reliability Monitor</h4>
+      <ul class="simple-list" *ngIf="reliabilityFlags.length > 0; else healthy">
+        <li *ngFor="let flag of reliabilityFlags">{{ flag }}</li>
+      </ul>
+      <ng-template #healthy>
+        <p class="minor-note">No reliability flags currently active.</p>
+      </ng-template>
+    </div>
+  </article>
+
+  <article class="panel-box">
+    <div class="panel-head-row">
+      <h4>Trade Journal</h4>
+      <div class="action-row">
+        <button type="button" (click)="addJournalRow()">Log Current Signal</button>
+        <button type="button" (click)="clearJournal()">Clear</button>
+      </div>
+    </div>
+    <table class="journal-table" *ngIf="journal.length > 0; else noJournal">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Verdict</th>
+          <th>Entry</th>
+          <th>Target</th>
+          <th>SL</th>
+          <th>Conf</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of journal">
+          <td>{{ row.ts | date: 'short' }}</td>
+          <td>{{ row.verdict }}</td>
+          <td>{{ row.entry | number: '1.2-2' }}</td>
+          <td>{{ row.target | number: '1.2-2' }}</td>
+          <td>{{ row.stopLoss | number: '1.2-2' }}</td>
+          <td>{{ row.confidence | number: '1.0-0' }}%</td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #noJournal>
+      <p class="minor-note">No journal entries yet.</p>
+    </ng-template>
+  </article>
+
+  <article class="news-impact">
+    <h4>News Impact</h4>
+    <p>{{ snapshot.insight.newsImpact }}</p>
+  </article>
+
+  <article class="gate-panel" *ngIf="!gatePassed && gateReasons.length > 0">
+    <h4>Execution Blocks</h4>
+    <ul>
+      <li *ngFor="let reason of gateReasons">{{ reason }}</li>
+    </ul>
+  </article>
+
+  <div class="insight-cols">
+    <article>
+      <h4>Rationale</h4>
+      <ul>
+        <li *ngFor="let item of snapshot.insight.rationale">{{ item }}</li>
+      </ul>
+    </article>
+
+    <article>
+      <h4>Risk Alerts</h4>
+      <ul>
+        <li *ngFor="let risk of snapshot.insight.risks">{{ risk }}</li>
+      </ul>
+    </article>
+  </div>
+
+  <article class="news-stream" *ngIf="snapshot.insight.latestNews.length > 0">
+    <h4>Latest News</h4>
+    <a
+      *ngFor="let item of snapshot.insight.latestNews"
+      [href]="item.url"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="news-item"
+    >
+      <div>
+        <p>{{ item.title }}</p>
+        <small>{{ item.source }} | {{ item.publishedAt }}</small>
+      </div>
+      <span
+        class="sentiment"
+        [class.sentiment-bull]="item.sentiment === 'BULLISH'"
+        [class.sentiment-bear]="item.sentiment === 'BEARISH'"
+      >
+        {{ item.sentiment }}
+      </span>
+    </a>
+  </article>
+</section>

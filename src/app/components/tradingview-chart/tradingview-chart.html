@@ -1,0 +1,73 @@
+<div class="tv-toolbar" *ngIf="showTypeSelector">
+  <a class="tv-link" [href]="advancedChartUrl" target="_blank" rel="noopener noreferrer">
+    Open Advanced Chart (IN)
+  </a>
+
+  <label for="chartTypeSelect">Series Type</label>
+  <select
+    id="chartTypeSelect"
+    [value]="selectedChartType"
+    (change)="onChartTypeChange($any($event.target).value)"
+  >
+    <option *ngFor="let type of chartTypes" [value]="type.value">
+      {{ type.label }}
+    </option>
+  </select>
+
+  <label for="priceScaleModeSelect">Price Scale</label>
+  <select
+    id="priceScaleModeSelect"
+    [value]="selectedPriceScaleMode"
+    (change)="onPriceScaleModeChange($any($event.target).value)"
+  >
+    <option *ngFor="let mode of priceScaleModes" [value]="mode.value">
+      {{ mode.label }}
+    </option>
+  </select>
+
+  <label for="timeZoneSelect">Time Zone</label>
+  <select
+    id="timeZoneSelect"
+    [value]="selectedTimeZone"
+    (change)="onTimeZoneChange($any($event.target).value)"
+  >
+    <option *ngFor="let zone of timeZones" [value]="zone.value">
+      {{ zone.label }}
+    </option>
+  </select>
+
+  <label for="barSpacingSelect">Bar Spacing</label>
+  <select
+    id="barSpacingSelect"
+    [value]="selectedBarSpacing"
+    (change)="onBarSpacingChange($any($event.target).value)"
+  >
+    <option [value]="6">Compact</option>
+    <option [value]="10">Balanced</option>
+    <option [value]="14">Wide</option>
+  </select>
+
+  <label for="rightOffsetSelect">Right Offset</label>
+  <select
+    id="rightOffsetSelect"
+    [value]="selectedRightOffset"
+    (change)="onRightOffsetChange($any($event.target).value)"
+  >
+    <option [value]="0">0</option>
+    <option [value]="3">3</option>
+    <option [value]="6">6</option>
+  </select>
+
+  <label class="tv-check">
+    <input
+      type="checkbox"
+      [checked]="isPriceScaleInverted"
+      (change)="onInvertScaleChange($any($event.target).checked)"
+    />
+    Invert Scale
+  </label>
+</div>
+
+<div class="tv-chart-shell" [style.height.px]="height">
+  <div #container class="tv-chart-host"></div>
+</div>
