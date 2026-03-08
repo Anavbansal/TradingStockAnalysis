@@ -2,13 +2,30 @@
   <header class="top-nav">
     <div class="nav-brand">ANAVAI</div>
     <div class="nav-search">
-      <input
-        [(ngModel)]="symbol"
-        (keyup.enter)="setSymbol(symbol)"
-        type="text"
-        placeholder="Search symbol"
-        class="search-input"
-      />
+      <div class="symbol-search-wrap">
+        <input
+          [(ngModel)]="symbol"
+          (ngModelChange)="onSymbolInputChange($event)"
+          (focus)="onSymbolInputFocus()"
+          (blur)="onSymbolInputBlur()"
+          (keyup.enter)="setSymbol(symbol)"
+          type="text"
+          placeholder="Search symbol"
+          class="search-input"
+          autocomplete="off"
+        />
+        <div class="symbol-suggest-menu" *ngIf="showSymbolSuggestions">
+          <button
+            type="button"
+            class="symbol-suggest-item"
+            *ngFor="let item of symbolSuggestions"
+            (mousedown)="onSymbolSuggestionPick(item)"
+          >
+            <span class="symbol-code">{{ item.symbol }}</span>
+            <span class="symbol-name">{{ item.name }}</span>
+          </button>
+        </div>
+      </div>
       <button type="button" class="submit-btn" [disabled]="isManualSubmitting" (click)="onManualRefresh()">
         <span *ngIf="isManualSubmitting" class="btn-spinner" aria-hidden="true"></span>
         {{ isManualSubmitting ? 'Loading...' : 'Submit' }}

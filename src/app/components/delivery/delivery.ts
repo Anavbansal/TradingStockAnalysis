@@ -1,18 +1,26 @@
 import { CommonModule, DecimalPipe } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Candle, MarketSnapshot } from '../../models/market.models';
 import { TradingviewChartComponent } from '../tradingview-chart/tradingview-chart';
 
 @Component({
   selector: 'app-delivery',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, TradingviewChartComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, TradingviewChartComponent],
   templateUrl: './delivery.html',
   styleUrl: './delivery.css'
 })
-export class DeliveryComponent {
+export class DeliveryComponent implements OnChanges {
   @Input({ required: true }) snapshot!: MarketSnapshot;
   @Input() historyDays = 60;
+  peRatio = 20;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['snapshot']) {
+      this.loadPeRatio();
+    }
+  }
 
   get shortTermAction(): 'BUY' | 'SELL' | 'HOLD' {
     return this.snapshot.insight?.verdict ?? 'HOLD';
@@ -210,6 +218,13 @@ export class DeliveryComponent {
     return 'HIGH';
   }
 
+  get peBand(): 'ATTRACTIVE' | 'FAIR' | 'EXPENSIVE' {
+    const pe = this.peRatio;
+    if (pe <= 18) return 'ATTRACTIVE';
+    if (pe <= 30) return 'FAIR';
+    return 'EXPENSIVE';
+  }
+
   get investmentViewClass(): string {
     return this.investmentView === 'ACCUMULATE'
       ? 'state-accumulate'
@@ -280,5 +295,28 @@ export class DeliveryComponent {
 
   private round(value: number): number {
     return Math.round(value * 100) / 100;
+  }
+
+  savePeRatio(): void {
+    try {
+      localStorage.setItem(this.peKey(), JSON.stringify({ peRatio: this.peRatio }));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  private loadPeRatio(): void {
+    try {
+      const raw = localStorage.getItem(this.peKey());
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { peRatio?: number };
+      this.peRatio = Number.isFinite(parsed.peRatio) ? Math.max(Number(parsed.peRatio), 0.1) : this.peRatio;
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  private peKey(): string {
+    return `anavai.delivery.pe.${this.snapshot?.stock || 'DEFAULT'}`;
   }
 }

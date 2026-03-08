@@ -116,6 +116,29 @@
   gap: 0.35rem;
 }
 
+.pe-input-row {
+  margin-top: 0.55rem;
+}
+
+.pe-input-row label {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.pe-input-row span {
+  font-size: 0.66rem;
+  color: #90a8bf;
+}
+
+.pe-input-row input {
+  border: 1px solid #2a455d;
+  border-radius: 8px;
+  background: #102335;
+  color: #e5f2ff;
+  padding: 0.34rem 0.45rem;
+  font-size: 0.72rem;
+}
+
 .notes p {
   font-size: 0.72rem;
   color: #97afc4;

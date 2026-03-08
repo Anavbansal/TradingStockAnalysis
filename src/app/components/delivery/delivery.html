@@ -29,6 +29,15 @@
       <div><p>Max Drawdown</p><strong>{{ maxDrawdownPct | number: '1.2-2' }}%</strong></div>
       <div><p>Ann. Volatility</p><strong>{{ annualizedVolatilityPct | number: '1.2-2' }}%</strong></div>
       <div><p>Latest Price</p><strong>Rs {{ endPrice | number: '1.2-2' }}</strong></div>
+      <div><p>P/E Ratio</p><strong>{{ peRatio | number: '1.2-2' }}</strong></div>
+      <div><p>Valuation</p><strong>{{ peBand }}</strong></div>
+    </div>
+
+    <div class="pe-input-row">
+      <label>
+        <span>P/E Ratio (manual)</span>
+        <input type="number" [(ngModel)]="peRatio" min="0.1" step="0.1" (change)="savePeRatio()" />
+      </label>
     </div>
 
     <div class="notes">

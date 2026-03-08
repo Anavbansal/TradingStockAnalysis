@@ -104,6 +104,11 @@ interface PriceAlertsResponseItem {
   updated_at?: number;
 }
 
+export interface SymbolSuggestion {
+  symbol: string;
+  name: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -111,6 +116,7 @@ export class MarketDataService {
   private readonly apiUrl = '/api/analyze';
   private readonly liveWsUrl = 'wss://9dmy4sgdc3.execute-api.ap-south-1.amazonaws.com/prod';
   private readonly watchlistApiUrl = '/api/watchlist';
+  private readonly symbolSearchApiUrl = '/api/symbol-search';
   private readonly watchlistStorageKey = 'anavai.recentSearches.v1';
   private readonly watchlistUserId = 'default-user';
   private readonly requestTimeoutMs = 15000;
@@ -166,6 +172,22 @@ export class MarketDataService {
       .pipe(
         map(() => void 0),
         catchError(() => of(void 0))
+      );
+  }
+
+  searchSymbols(query: string, limit = 12): Observable<SymbolSuggestion[]> {
+    const clean = query.trim().toUpperCase();
+    if (!clean) {
+      return of([]);
+    }
+
+    return this.http
+      .get<{ items?: Array<{ symbol?: string; name?: string }> }>(
+        `${this.symbolSearchApiUrl}?q=${encodeURIComponent(clean)}&limit=${Math.max(1, Math.min(limit, 50))}`
+      )
+      .pipe(
+        map((response) => this.normalizeSuggestions(response.items ?? [], clean, limit)),
+        catchError(() => of(this.searchSymbolsLocal(clean, limit)))
       );
   }
 
@@ -572,6 +594,55 @@ private toWatchlist(snapshot: MarketSnapshot): WatchlistItem[] {
       return `NSE:${clean}`;
     }
     return `NSE:${clean}-EQ`;
+  }
+
+  private searchSymbolsLocal(query: string, limit: number): SymbolSuggestion[] {
+    const merged = new Map<string, SymbolSuggestion>();
+
+    for (const item of this.watchlistSeed) {
+      const symbol = item.symbol.trim().toUpperCase();
+      if (!symbol) {
+        continue;
+      }
+      merged.set(symbol, { symbol, name: item.name });
+    }
+
+    for (const symbolRaw of this.recentSearchSymbols) {
+      const symbol = symbolRaw.trim().toUpperCase();
+      if (!symbol) {
+        continue;
+      }
+      if (!merged.has(symbol)) {
+        merged.set(symbol, { symbol, name: `${symbol} Ltd.` });
+      }
+    }
+
+    const startsWith = Array.from(merged.values()).filter((item) => item.symbol.startsWith(query));
+    const contains = Array.from(merged.values()).filter((item) => !item.symbol.startsWith(query) && item.symbol.includes(query));
+    return [...startsWith, ...contains].slice(0, Math.max(1, limit));
+  }
+
+  private normalizeSuggestions(
+    items: Array<{ symbol?: string; name?: string }>,
+    query: string,
+    limit: number
+  ): SymbolSuggestion[] {
+    const unique = new Map<string, SymbolSuggestion>();
+    for (const item of items) {
+      const symbol = String(item.symbol ?? '').trim().toUpperCase();
+      if (!symbol) {
+        continue;
+      }
+      unique.set(symbol, {
+        symbol,
+        name: String(item.name ?? '').trim() || `${symbol} Ltd.`
+      });
+    }
+
+    const normalized = Array.from(unique.values());
+    const startsWith = normalized.filter((item) => item.symbol.startsWith(query));
+    const contains = normalized.filter((item) => !item.symbol.startsWith(query) && item.symbol.includes(query));
+    return [...startsWith, ...contains].slice(0, Math.max(1, limit));
   }
 
   private toEpochSeconds(isoDate: string): number {

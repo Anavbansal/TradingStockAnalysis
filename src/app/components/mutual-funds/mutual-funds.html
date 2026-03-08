@@ -16,6 +16,7 @@
       <button type="button" class="scheme-item" *ngFor="let scheme of filteredSchemes" (click)="selectScheme(scheme.schemeCode)">
         <span>{{ scheme.schemeName }}</span>
         <small>{{ scheme.schemeCode }}</small>
+        <small *ngIf="getSchemeRankLabel(scheme.schemeCode) as rankLabel">{{ rankLabel }}</small>
       </button>
     </div>
   </article>
@@ -23,20 +24,82 @@
   <article class="mf-card detail-card" *ngIf="selected as fund">
     <div class="head">
       <h3>{{ fund.schemeName }}</h3>
-      <button type="button" (click)="addToCompare()">Add Compare</button>
     </div>
     <p class="meta">{{ fund.amc || '-' }} | {{ fund.category || '-' }}</p>
+    <p class="meta" *ngIf="getSchemeRankLabel(fund.schemeCode) as selectedRank">{{ selectedRank }}</p>
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
     <p class="meta" *ngIf="isHistoryLoading">Refreshing NAV history...</p>
 
-    <div class="metrics">
-      <div><p>Current NAV</p><strong>{{ currentNav | number: '1.4-4' }}</strong></div>
-      <div><p>1M</p><strong [class.up]="return1M >= 0" [class.down]="return1M < 0">{{ return1M | number: '1.2-2' }}%</strong></div>
-      <div><p>6M</p><strong [class.up]="return6M >= 0" [class.down]="return6M < 0">{{ return6M | number: '1.2-2' }}%</strong></div>
-      <div><p>1Y</p><strong [class.up]="return1Y >= 0" [class.down]="return1Y < 0">{{ return1Y | number: '1.2-2' }}%</strong></div>
-      <div><p>3Y CAGR</p><strong [class.up]="return3YCagr >= 0" [class.down]="return3YCagr < 0">{{ return3YCagr | number: '1.2-2' }}%</strong></div>
-      <div><p>5Y CAGR</p><strong [class.up]="return5YCagr >= 0" [class.down]="return5YCagr < 0">{{ return5YCagr | number: '1.2-2' }}%</strong></div>
+    <div class="decision-bar" [class.buy]="selectedVerdict === 'BUY'" [class.watch]="selectedVerdict === 'WATCH'" [class.avoid]="selectedVerdict === 'AVOID'">
+      <div>
+        <p>Verdict</p>
+        <strong>{{ selectedVerdict }}</strong>
+      </div>
+      <div>
+        <p>Score</p>
+        <strong>{{ selectedScore | number: '1.0-1' }}/100</strong>
+      </div>
+      <div>
+        <p>Profile</p>
+        <strong>{{ investorProfile | titlecase }}</strong>
+      </div>
+      <div>
+        <p>Horizon</p>
+        <strong>{{ investmentHorizonYears }} years</strong>
+      </div>
     </div>
+
+    <div class="preference-grid">
+      <label>
+        <span>Investor Profile</span>
+        <select [(ngModel)]="investorProfile">
+          <option value="conservative">Conservative</option>
+          <option value="balanced">Balanced</option>
+          <option value="aggressive">Aggressive</option>
+        </select>
+      </label>
+      <label>
+        <span>Horizon (Years)</span>
+        <input type="number" min="1" max="25" [(ngModel)]="investmentHorizonYears" />
+      </label>
+    </div>
+
+    <div class="metrics" *ngIf="selectedMetrics as m">
+      <div><p>Current NAV</p><strong>{{ currentNav | number: '1.4-4' }}</strong></div>
+      <div><p>1Y Return</p><strong [class.up]="return1Y >= 0" [class.down]="return1Y < 0">{{ return1Y | number: '1.2-2' }}%</strong></div>
+      <div><p>Alpha</p><strong>{{ m.alpha | number: '1.2-2' }}</strong></div>
+      <div><p>CAGR</p><strong>{{ m.cagr | number: '1.2-2' }}%</strong></div>
+      <div><p>Rolling 3Y</p><strong>{{ m.rollingReturn3Y | number: '1.2-2' }}%</strong></div>
+      <div><p>Sharpe</p><strong>{{ m.sharpeRatio | number: '1.3-3' }}</strong></div>
+      <div><p>Sortino</p><strong>{{ m.sortinoRatio | number: '1.3-3' }}</strong></div>
+      <div><p>Info Ratio</p><strong>{{ m.informationRatio | number: '1.3-3' }}</strong></div>
+      <div><p>Std Dev</p><strong>{{ m.standardDeviation | number: '1.2-2' }}%</strong></div>
+      <div><p>Beta</p><strong>{{ m.beta | number: '1.3-3' }}</strong></div>
+      <div><p>R-Squared</p><strong>{{ m.rSquared | number: '1.2-2' }}</strong></div>
+      <div><p>Upside Capture</p><strong>{{ m.upsideCapture | number: '1.2-2' }}</strong></div>
+      <div><p>Downside Capture</p><strong>{{ m.downsideCapture | number: '1.2-2' }}</strong></div>
+      <div><p>Tracking Error</p><strong>{{ m.trackingError | number: '1.2-2' }}</strong></div>
+      <div><p>TER</p><strong>{{ m.expenseRatio === null ? 'NA' : ((m.expenseRatio | number: '1.2-2') + '%') }}</strong></div>
+      <div><p>PTR</p><strong>{{ m.turnoverRatio === null ? 'NA' : ((m.turnoverRatio | number: '1.2-2') + '%') }}</strong></div>
+      <div><p>Exit Load</p><strong>{{ m.exitLoad === null ? 'NA' : ((m.exitLoad | number: '1.2-2') + '%') }}</strong></div>
+    </div>
+
+    <div class="reasons-grid">
+      <div>
+        <h4>Technical Reasons</h4>
+        <ul>
+          <li *ngFor="let reason of selectedTechnicalReasons">{{ reason }}</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Non-Technical Reasons</h4>
+        <ul>
+          <li *ngFor="let reason of selectedNonTechnicalReasons">{{ reason }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="disclaimer">Final investment decision should include TER, PTR, tax impact, and portfolio overlap checks from AMC/factsheet data.</p>
 
     <div class="chart-shell">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" *ngIf="chartPath">
@@ -70,29 +133,176 @@
     </div>
   </article>
 
-  <article class="mf-card compare-card">
-    <h3>Compare Funds (Max 3)</h3>
-    <table *ngIf="compareRows.length > 0; else noCompare">
-      <thead>
-        <tr>
-          <th>Scheme</th>
-          <th>NAV</th>
-          <th>1Y Return</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of compareRows">
-          <td>{{ row.schemeName }}</td>
-          <td>{{ row.nav | number: '1.4-4' }}</td>
-          <td [class.up]="row.return1Y >= 0" [class.down]="row.return1Y < 0">{{ row.return1Y | number: '1.2-2' }}%</td>
-          <td><button type="button" class="remove-btn" (click)="removeCompare(row.schemeCode)">Remove</button></td>
-        </tr>
-      </tbody>
-    </table>
-    <ng-template #noCompare>
-      <p class="meta">Select a scheme and click "Add Compare".</p>
+  <article class="mf-card leaderboard-card">
+    <div class="head">
+      <h3>Schema-Based Rankings</h3>
+      <button type="button" (click)="refreshRankingsNow()">Refresh Now</button>
+    </div>
+    <p class="meta" *ngIf="isRankingLoading">Computing Alpha/Risk/Efficiency metrics...</p>
+    <p class="meta" *ngIf="lastRefreshAt">Last refresh: {{ lastRefreshAt | date: 'dd MMM yyyy, hh:mm a' }}</p>
+    <p class="meta">Next monthly auto refresh: {{ nextMonthlyRefreshAt | date: 'dd MMM yyyy, hh:mm a' }}</p>
+    <p class="error" *ngIf="rankingMessage">{{ rankingMessage }}</p>
+    <p class="meta">TER/PTR/Exit Load are estimated by segment profile for advanced screening; confirm exact factsheet values before investing.</p>
+  </article>
+</section>
+
+<section class="mf-grid lower" *ngIf="selected">
+  <article class="mf-card">
+    <h3>Historical Backtesting</h3>
+    <div class="sip-inputs">
+      <label>
+        <span>Scenario Start</span>
+        <select [(ngModel)]="backtestStartPreset">
+          <option *ngFor="let preset of backtestPresets" [ngValue]="preset.value">{{ preset.label }}</option>
+        </select>
+      </label>
+      <label>
+        <span>Lumpsum (Rs)</span>
+        <input type="number" min="1000" step="1000" [(ngModel)]="backtestLumpsum" />
+      </label>
+      <label>
+        <span>Monthly SIP (Rs)</span>
+        <input type="number" min="500" step="500" [(ngModel)]="backtestMonthlySip" />
+      </label>
+    </div>
+    <div class="metrics" *ngIf="backtestSummary as b; else noBacktest">
+      <div><p>Lumpsum Invested</p><strong>Rs {{ b.lumpsumInvested | number: '1.2-2' }}</strong></div>
+      <div><p>Lumpsum Value</p><strong>Rs {{ b.lumpsumValue | number: '1.2-2' }}</strong></div>
+      <div><p>Lumpsum Return</p><strong [class.up]="b.lumpsumReturnPct >= 0" [class.down]="b.lumpsumReturnPct < 0">{{ b.lumpsumReturnPct | number: '1.2-2' }}%</strong></div>
+      <div><p>SIP Invested</p><strong>Rs {{ b.sipInvested | number: '1.2-2' }}</strong></div>
+      <div><p>SIP Value</p><strong>Rs {{ b.sipValue | number: '1.2-2' }}</strong></div>
+      <div><p>SIP CAGR Approx</p><strong [class.up]="b.sipXirrApprox >= 0" [class.down]="b.sipXirrApprox < 0">{{ b.sipXirrApprox | number: '1.2-2' }}%</strong></div>
+    </div>
+    <ng-template #noBacktest>
+      <p class="meta">Not enough NAV history for this backtest window.</p>
     </ng-template>
   </article>
 </section>
 
+<section class="mf-grid lower">
+  <article class="mf-card leaderboard-card">
+    <h3>Top 5 Funds - Size Wise</h3>
+    <label class="meta">Choose Segment</label>
+    <select class="mf-input" [(ngModel)]="selectedSizeSegment">
+      <option *ngFor="let segment of sizeSegments" [ngValue]="segment">{{ segment }}</option>
+    </select>
+    <div *ngIf="selectedSizeSegment">
+      <p class="meta"><strong>{{ selectedSizeSegment }}</strong></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Fund</th>
+            <th>Score</th>
+            <th>Verdict</th>
+            <th>Alpha</th>
+            <th>CAGR</th>
+            <th>Rolling 3Y</th>
+            <th>Sharpe</th>
+            <th>Sortino</th>
+            <th>Info</th>
+            <th>Std Dev</th>
+            <th>Beta</th>
+            <th>R2</th>
+            <th>UpCap</th>
+            <th>DownCap</th>
+            <th>TE</th>
+            <th>TER</th>
+            <th>PTR</th>
+            <th>Exit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of activeSizeRows; let i = index">
+            <td>#{{ i + 1 }}</td>
+            <td>
+              <button type="button" class="link-btn" (click)="selectScheme(row.schemeCode)">{{ row.schemeName }}</button>
+              <small>{{ row.risk }} | {{ row.horizon }}</small>
+            </td>
+            <td>{{ row.score | number: '1.0-1' }}</td>
+            <td [class.up]="row.verdict === 'BUY'" [class.down]="row.verdict === 'AVOID'">{{ row.verdict }}</td>
+            <td>{{ row.metrics.alpha | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.cagr | number: '1.2-2' }}%</td>
+            <td>{{ row.metrics.rollingReturn3Y | number: '1.2-2' }}%</td>
+            <td>{{ row.metrics.sharpeRatio | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.sortinoRatio | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.informationRatio | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.standardDeviation | number: '1.2-2' }}%</td>
+            <td>{{ row.metrics.beta | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.rSquared | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.upsideCapture | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.downsideCapture | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.trackingError | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.expenseRatio === null ? 'NA' : (row.metrics.expenseRatio | number: '1.2-2') }}</td>
+            <td>{{ row.metrics.turnoverRatio === null ? 'NA' : (row.metrics.turnoverRatio | number: '1.2-2') }}</td>
+            <td>{{ row.metrics.exitLoad === null ? 'NA' : (row.metrics.exitLoad | number: '1.2-2') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="mf-grid lower">
+  <article class="mf-card leaderboard-card">
+    <h3>Top 5 Funds - Sector Wise</h3>
+    <label class="meta">Choose Segment</label>
+    <select class="mf-input" [(ngModel)]="selectedSectorSegment">
+      <option *ngFor="let segment of sectorSegments" [ngValue]="segment">{{ segment }}</option>
+    </select>
+    <div *ngIf="selectedSectorSegment">
+      <p class="meta"><strong>{{ selectedSectorSegment }}</strong></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Fund</th>
+            <th>Score</th>
+            <th>Verdict</th>
+            <th>Alpha</th>
+            <th>CAGR</th>
+            <th>Rolling 3Y</th>
+            <th>Sharpe</th>
+            <th>Sortino</th>
+            <th>Info</th>
+            <th>Std Dev</th>
+            <th>Beta</th>
+            <th>R2</th>
+            <th>UpCap</th>
+            <th>DownCap</th>
+            <th>TE</th>
+            <th>TER</th>
+            <th>PTR</th>
+            <th>Exit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of activeSectorRows; let i = index">
+            <td>#{{ i + 1 }}</td>
+            <td>
+              <button type="button" class="link-btn" (click)="selectScheme(row.schemeCode)">{{ row.schemeName }}</button>
+              <small>{{ row.risk }} | {{ row.horizon }}</small>
+            </td>
+            <td>{{ row.score | number: '1.0-1' }}</td>
+            <td [class.up]="row.verdict === 'BUY'" [class.down]="row.verdict === 'AVOID'">{{ row.verdict }}</td>
+            <td>{{ row.metrics.alpha | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.cagr | number: '1.2-2' }}%</td>
+            <td>{{ row.metrics.rollingReturn3Y | number: '1.2-2' }}%</td>
+            <td>{{ row.metrics.sharpeRatio | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.sortinoRatio | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.informationRatio | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.standardDeviation | number: '1.2-2' }}%</td>
+            <td>{{ row.metrics.beta | number: '1.3-3' }}</td>
+            <td>{{ row.metrics.rSquared | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.upsideCapture | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.downsideCapture | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.trackingError | number: '1.2-2' }}</td>
+            <td>{{ row.metrics.expenseRatio === null ? 'NA' : (row.metrics.expenseRatio | number: '1.2-2') }}</td>
+            <td>{{ row.metrics.turnoverRatio === null ? 'NA' : (row.metrics.turnoverRatio | number: '1.2-2') }}</td>
+            <td>{{ row.metrics.exitLoad === null ? 'NA' : (row.metrics.exitLoad | number: '1.2-2') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

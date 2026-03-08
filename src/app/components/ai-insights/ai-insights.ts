@@ -45,6 +45,7 @@ export class AiInsightsComponent implements OnChanges {
   epsGrowthPct = 12;
   debtToEquity = 0.8;
   roePct = 14;
+  peRatio = 20;
   copilotUrl: SafeResourceUrl | null = null;
   copilotError = '';
   isCopilotLaunching = false;
@@ -232,7 +233,10 @@ export class AiInsightsComponent implements OnChanges {
     const eps = this.clamp(this.epsGrowthPct, -20, 40);
     const debt = this.clamp(this.debtToEquity, 0, 4);
     const roe = this.clamp(this.roePct, 0, 35);
-    const score = 50 + eps * 0.9 + roe * 0.8 - debt * 9;
+    const pe = this.clamp(this.peRatio, 1, 120);
+    // Reward relatively lower valuation without overpowering growth/profitability.
+    const peScore = this.clamp(100 - ((pe - 10) / 50) * 100, 0, 100);
+    const score = 45 + eps * 0.85 + roe * 0.75 - debt * 8 + peScore * 0.18;
     return this.round(this.clamp(score, 0, 100));
   }
 
@@ -248,7 +252,8 @@ export class AiInsightsComponent implements OnChanges {
         JSON.stringify({
           epsGrowthPct: this.epsGrowthPct,
           debtToEquity: this.debtToEquity,
-          roePct: this.roePct
+          roePct: this.roePct,
+          peRatio: this.peRatio
         })
       );
     } catch {
@@ -358,10 +363,11 @@ export class AiInsightsComponent implements OnChanges {
       if (!raw) {
         return;
       }
-      const parsed = JSON.parse(raw) as { epsGrowthPct?: number; debtToEquity?: number; roePct?: number };
+      const parsed = JSON.parse(raw) as { epsGrowthPct?: number; debtToEquity?: number; roePct?: number; peRatio?: number };
       this.epsGrowthPct = Number.isFinite(parsed.epsGrowthPct) ? Number(parsed.epsGrowthPct) : this.epsGrowthPct;
       this.debtToEquity = Number.isFinite(parsed.debtToEquity) ? Number(parsed.debtToEquity) : this.debtToEquity;
       this.roePct = Number.isFinite(parsed.roePct) ? Number(parsed.roePct) : this.roePct;
+      this.peRatio = Number.isFinite(parsed.peRatio) ? Number(parsed.peRatio) : this.peRatio;
     } catch {
       // ignore storage failures
     }

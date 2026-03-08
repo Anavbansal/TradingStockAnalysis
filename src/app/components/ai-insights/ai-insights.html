@@ -136,6 +136,10 @@
           <span>ROE %</span>
           <input type="number" [(ngModel)]="roePct" (change)="saveFundamentals()" />
         </label>
+        <label>
+          <span>P/E Ratio</span>
+          <input type="number" [(ngModel)]="peRatio" step="0.1" min="0.1" (change)="saveFundamentals()" />
+        </label>
       </div>
       <p class="minor-note">Fundamental score: <strong>{{ fundamentalScore | number: '1.0-0' }}</strong> / 100</p>
     </div>

@@ -28,7 +28,7 @@ import {
   AngelUserProfile,
   AuthService
 } from '../services/auth.service';
-import { MarketDataService } from '../services/market-data.service';
+import { MarketDataService, SymbolSuggestion } from '../services/market-data.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -126,6 +126,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   symbol = 'NIFTY';
+  symbolSuggestions: SymbolSuggestion[] = [];
+  isSymbolSearchLoading = false;
+  showSymbolSuggestions = false;
   alertName = '';
   alertComparisonType: PriceAlert['comparisonType'] = 'LTP';
   alertCondition: PriceAlert['condition'] = 'GTE';
@@ -167,6 +170,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   oiBuildupRows: AngelOiBuildupItem[] = [];
 
   private wsSub: Subscription | null = null;
+  private symbolSearchSub: Subscription | null = null;
+  private symbolSearchDebounce: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly marketDataService: MarketDataService,
@@ -394,6 +399,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.wsSub?.unsubscribe();
+    this.symbolSearchSub?.unsubscribe();
+    if (this.symbolSearchDebounce) {
+      clearTimeout(this.symbolSearchDebounce);
+      this.symbolSearchDebounce = null;
+    }
   }
 
   setResolution(resolution: string): void {
@@ -444,8 +454,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     this.symbol = clean;
+    this.clearSymbolSuggestions();
     this.marketDataService.recordRecentSearch(clean).subscribe();
     this.restartRefreshStream();
+  }
+
+  onSymbolInputChange(value: string): void {
+    this.symbol = String(value ?? '').toUpperCase();
+    this.queueSymbolSearch(this.symbol);
+  }
+
+  onSymbolInputFocus(): void {
+    if (this.symbolSuggestions.length > 0) {
+      this.showSymbolSuggestions = true;
+    }
+  }
+
+  onSymbolInputBlur(): void {
+    setTimeout(() => {
+      this.showSymbolSuggestions = false;
+    }, 120);
+  }
+
+  onSymbolSuggestionPick(item: SymbolSuggestion): void {
+    this.symbol = item.symbol;
+    this.setSymbol(item.symbol);
   }
 
   onRefreshConfigChange(): void {
@@ -460,6 +493,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const clean = this.symbol.trim().toUpperCase();
     if (clean) {
       this.symbol = clean;
+      this.clearSymbolSuggestions();
       this.marketDataService.recordRecentSearch(clean).subscribe();
     }
 
@@ -774,6 +808,50 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private round(value: number): number {
     return Math.round(value * 100) / 100;
+  }
+
+  private queueSymbolSearch(value: string): void {
+    const clean = value.trim().toUpperCase();
+    if (this.symbolSearchDebounce) {
+      clearTimeout(this.symbolSearchDebounce);
+      this.symbolSearchDebounce = null;
+    }
+    this.symbolSearchSub?.unsubscribe();
+
+    if (clean.length < 2) {
+      this.clearSymbolSuggestions();
+      return;
+    }
+
+    this.symbolSearchDebounce = setTimeout(() => {
+      const requested = clean;
+      this.isSymbolSearchLoading = true;
+      this.symbolSearchSub = this.marketDataService.searchSymbols(requested).subscribe({
+        next: (rows) => {
+          const current = this.symbol.trim().toUpperCase();
+          if (current !== requested) {
+            return;
+          }
+          this.symbolSuggestions = rows;
+          this.showSymbolSuggestions = rows.length > 0;
+          this.isSymbolSearchLoading = false;
+        },
+        error: () => {
+          this.isSymbolSearchLoading = false;
+          this.clearSymbolSuggestions();
+        }
+      });
+    }, 220);
+  }
+
+  private clearSymbolSuggestions(): void {
+    this.symbolSuggestions = [];
+    this.showSymbolSuggestions = false;
+    this.isSymbolSearchLoading = false;
+    if (this.symbolSearchDebounce) {
+      clearTimeout(this.symbolSearchDebounce);
+      this.symbolSearchDebounce = null;
+    }
   }
 
   private startWebSocketStream(): void {
